@@ -1,0 +1,6 @@
+@insight_HostAddress = http://localhost:5097
+
+GET {{insight_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
