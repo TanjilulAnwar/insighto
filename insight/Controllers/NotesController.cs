@@ -14,8 +14,14 @@ namespace insight.Controllers
     public class NotesController : ControllerBase
     {
 
-        NotesManager _notesManager = new NotesManager();
 
+        private readonly INotesManager _notesManager;
+
+        public NotesController(INotesManager notesManager)
+        {
+            _notesManager = notesManager;
+
+        }
 
         [HttpPost]
         public IActionResult GetAllNotes(ListRequest req)

@@ -1,13 +1,22 @@
 ﻿using insight.Models;
 using insight.Repository;
+using insight.Stored;
 using System.Collections.Generic;
 
 namespace insight.BLL
 {
-    public class NotesManager
+    public class NotesManager:INotesManager
     {
 
-        NotesRepository _notesRepository = new NotesRepository();
+     //   NotesRepository _notesRepository = new NotesRepository();
+
+        private readonly INotesRepository _notesRepository;
+
+        public NotesManager(INotesRepository notesRepository)
+        {
+            _notesRepository = notesRepository;
+
+        }
 
         public bool Add(NoteModel noteModel, string userId)
         {

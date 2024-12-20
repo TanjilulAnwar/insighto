@@ -1,4 +1,4 @@
-﻿namespace insight.BLL
+﻿namespace insight.Stored
 {
     public static class StoredVariable
     {

@@ -3,7 +3,7 @@ using insight.Models;
 
 namespace insight.Repository
 {
-    public class NotesRepository
+    public class NotesRepository:INotesRepository
     {
 
         public bool Add(Note note)
