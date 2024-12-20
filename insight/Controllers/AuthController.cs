@@ -1,5 +1,5 @@
-﻿using insight.Models;
-using Microsoft.AspNetCore.Http;
+﻿using insight.DataContext;
+using insight.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -8,7 +8,7 @@ using System.Text;
 
 namespace insight.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -19,36 +19,53 @@ namespace insight.Controllers
             _jwtKey = configuration["jwt:key"];
 
         }
-        [HttpPost("/signup")]
+        [HttpPost]
         public IActionResult Signup([FromBody] User user)
         {
-            if (DataStore.Users.Any(u => u.Email == user.Email))
+            try
             {
-                return Conflict("Email already exists.");
+                if (DataStore.Users.Any(u => u.Email == user.Email))
+                {
+                    return Ok(new GlobalResponse("Email already exists!", false));
+                }
+                DataStore.Users.Add(user);
+                return Ok(new GlobalResponse("Successfully Signed up, Please log in to continue", true));
             }
-            DataStore.Users.Add(user);
-            return Ok("User registered successfully.");
+            catch
+            {
+                return Ok(new GlobalResponse("Sign up Failed",false));
+            }
+      
         }
 
-        [HttpPost("/login")]
-        public IActionResult Login([FromBody] User login)
+        [HttpPost]
+        public IActionResult Login([FromBody] UserVm login)
         {
-            var user = DataStore.Users.FirstOrDefault(u => u.Email == login.Email && u.Password == login.Password);
-            if (user == null)
+            try
             {
-                return Unauthorized("Invalid credentials.");
-            }
+                var user = DataStore.Users.FirstOrDefault(u => u.Email == login.Email && u.Password == login.Password);
+                if (user == null)
+                {
+                    return Ok(new GlobalResponse("Invalid credentials!", false));
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwtKey);
-            var tokenDescriptor = new SecurityTokenDescriptor
+                }
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(_jwtKey);
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, user.Email) }),
+                    Expires = DateTime.UtcNow.AddHours(1),
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                };
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                return Ok(new GlobalResponse("Login Successful!", true, new { Name = user.Name, Token = tokenHandler.WriteToken(token) }));
+            }
+            catch
             {
-                Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, user.Email) }),
-                Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return Ok(new { Token = tokenHandler.WriteToken(token) });
+                return Ok(new GlobalResponse("Login Failed!", false));
+            }
+         
         }
     }
 }
